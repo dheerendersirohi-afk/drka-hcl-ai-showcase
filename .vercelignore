@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+node_modules
+dist
+drka-hcl-ai/dist
+*.log
+*.zip
+*.tsbuildinfo
+edge-drka-*-profile

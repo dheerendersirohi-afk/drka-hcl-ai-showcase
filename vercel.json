@@ -1,0 +1,15 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "cd drka-hcl-ai && npm run build",
+  "outputDirectory": "drka-hcl-ai/dist",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}

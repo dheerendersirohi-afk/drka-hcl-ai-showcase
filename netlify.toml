@@ -1,0 +1,11 @@
+[build]
+  command = "cd drka-hcl-ai && npm run build"
+  publish = "drka-hcl-ai/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
