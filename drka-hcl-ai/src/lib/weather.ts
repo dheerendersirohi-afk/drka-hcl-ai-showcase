@@ -732,6 +732,23 @@ function localizeHindiWeatherPhrase(value: string) {
   return value;
 }
 
+function localizeTamilWeatherPhrase(value: string) {
+  const normalized = value.toLowerCase();
+
+  if (/mostly sunny/.test(normalized)) return 'பெரும்பாலும் வெயில்';
+  if (/partly sunny|partly cloudy/.test(normalized)) return 'பகுதி வெயில்/மேகம்';
+  if (/sunny|clear/.test(normalized)) return 'வெயில் தெளிவு';
+  if (/cloud|overcast/.test(normalized)) return 'மேகமூட்டம்';
+  if (/rain|shower/.test(normalized)) return 'மழை வாய்ப்பு';
+  if (/thunder|storm/.test(normalized)) return 'இடி/புயல் வாய்ப்பு';
+  if (/haze|hazy/.test(normalized)) return 'மூடுபனி/தூசி மந்தம்';
+  if (/fog/.test(normalized)) return 'மூடுபனி';
+  if (/hot|heat/.test(normalized)) return 'அதிக வெப்பம்';
+  if (/wind/.test(normalized)) return 'காற்று அதிகம்';
+
+  return value;
+}
+
 export function formatWeatherResponse(summary: WeatherSummary, languageCode = 'en-IN') {
   const dataStatus =
     summary.source === 'live'
@@ -770,6 +787,39 @@ export function formatWeatherResponse(summary: WeatherSummary, languageCode = 'e
         .map((day) => `${day.label} ${day.minC}-${day.maxC}°C ${localizeHindiWeatherPhrase(day.summary)}`)
         .join(' | ')}`,
       `NOAA: ${summary.noaa.status === 'available' ? 'climate cross-check उपलब्ध है' : 'climate context उपलब्ध नहीं है'}`,
+    ].join('\n');
+  }
+
+  if (languageCode === 'ta-IN') {
+    const tamilDataStatus =
+      summary.source === 'live'
+        ? summary.accuweatherSource === 'api'
+          ? 'நேரடி நகர வானிலை'
+          : 'நேரடி நகர வானிலை'
+        : 'Fallback மதிப்பீடு; துல்லியமான நேரடி நகர வானிலை அல்ல';
+
+    return [
+      `${summary.location}`,
+      `தரவு நிலை: ${tamilDataStatus}`,
+      `பதிவு நேரம்: ${summary.observedAt}`,
+      `தற்போதைய வெப்பநிலை: ${summary.currentTempC}°C / ${summary.currentTempF}°F`,
+      `உணரப்படும் வெப்பநிலை: ${summary.realFeelC}°C / ${summary.realFeelF}°F`,
+      `நிலைமை: ${localizeTamilWeatherPhrase(summary.condition)}`,
+      `காற்று: ${summary.wind}`,
+      `காற்றுத் தரம்: ${summary.airQuality}`,
+      `ஈரப்பதம்: ${summary.humidity}`,
+      `UV குறியீடு: ${summary.uvIndex}`,
+      `மேக மூட்டம்: ${summary.cloudCover}`,
+      `தெரிவு தூரம்: ${summary.visibility}`,
+      `அழுத்தம்: ${summary.pressure}`,
+      `கடந்த 1 மணி நேர மழை: ${summary.precipitationLastHour}`,
+      `இன்றிரவு குறைந்தபட்சம்: ${summary.tonightLowC}°C / ${summary.tonightLowF}°F`,
+      `நாளைய அதிகபட்சம்: ${summary.tomorrowHighC}°C / ${summary.tomorrowHighF}°F`,
+      `முன்னோக்கு: ${localizeTamilWeatherPhrase(summary.tomorrowSummary)}`,
+      `5 நாள் முன்னறிவிப்பு: ${summary.dailyForecasts
+        .map((day) => `${day.label} ${day.minC}-${day.maxC}°C ${localizeTamilWeatherPhrase(day.summary)}`)
+        .join(' | ')}`,
+      `NOAA: ${summary.noaa.status === 'available' ? 'climate cross-check கிடைக்கிறது' : 'climate context கிடைக்கவில்லை'}`,
     ].join('\n');
   }
 

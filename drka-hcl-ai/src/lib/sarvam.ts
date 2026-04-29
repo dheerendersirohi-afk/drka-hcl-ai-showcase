@@ -7,7 +7,7 @@ const SARVAM_TRANSLATE_URL = 'https://api.sarvam.ai/translate';
 const SARVAM_MODEL = 'sarvam-105b';
 const SARVAM_MAX_TOKENS = 2400;
 const SARVAM_REASONING_EFFORT = null;
-const REQUEST_TIMEOUT_MS = 18000;
+const REQUEST_TIMEOUT_MS = 45000;
 
 const SARVAM_CHAT_MODELS = [
   {

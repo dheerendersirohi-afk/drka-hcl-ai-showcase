@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 18000;
+const DEFAULT_TIMEOUT_MS = 45000;
 
 export function shouldUseSecureApi() {
   const configuredBase = import.meta.env.VITE_SECURE_API_BASE?.trim();

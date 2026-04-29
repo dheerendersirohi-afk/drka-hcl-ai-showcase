@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 18000;
+const DEFAULT_TIMEOUT_MS = 45000;
 
 export function sendJson(res, status, payload) {
   res.statusCode = status;

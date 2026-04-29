@@ -156,6 +156,38 @@ const WEATHER_KEYWORDS = [
   'हवामान',
   'હવામાન',
   'আবহাওয়া',
+  'வானிலை',
+  'முன்னறிவிப்பு',
+  'மழை',
+  'வெப்பநிலை',
+  'காற்று',
+  'आবोहवा',
+  'મોસમ',
+  'પવન',
+  'ಮಳೆ',
+  'ಹವಾಮಾನ',
+  'వాతావరణం',
+  'వర్షం',
+  'കാലാവസ്ഥ',
+  'മഴ',
+  'ମେଘ',
+  'ପାଗ',
+  'ਬਰਸਾਤ',
+  'ਮੌਸਮ',
+  'موسم',
+];
+
+const OPERATIONAL_LOCATION_ALIASES = [
+  { pattern: /\b(puducherry|puduchery|pondicherry|pondy)\b|புதுச்சேரி/u, location: 'Puducherry, India' },
+  { pattern: /\b(chennai)\b|சென்னை/u, location: 'Chennai, India' },
+  { pattern: /\b(mumbai)\b|मुंबई/u, location: 'Mumbai, India' },
+  { pattern: /\b(delhi|new delhi)\b|दिल्ली/u, location: 'Delhi, India' },
+  { pattern: /\b(kolkata)\b|কলকাতা/u, location: 'Kolkata, India' },
+  { pattern: /\b(bengaluru|bangalore)\b|ಬೆಂಗಳೂರು/u, location: 'Bengaluru, India' },
+  { pattern: /\b(hyderabad)\b|హైదరాబాదు|హైదరాబాద్/u, location: 'Hyderabad, India' },
+  { pattern: /\b(ahmedabad)\b|અમદાવાદ/u, location: 'Ahmedabad, India' },
+  { pattern: /\b(pune)\b|पुणे/u, location: 'Pune, India' },
+  { pattern: /\b(hapur)\b|हापुड़/u, location: 'Hapur, Uttar Pradesh' },
 ];
 
 const LOCATION_LANGUAGE_RULES: Array<{
@@ -306,6 +338,11 @@ function resolveOperationalLocation(content: string, extractedLocation: string) 
   const trimmedExtracted = extractedLocation.trim();
   const contentForLocation = content.replace(RESPONSE_LANGUAGE_DIRECTIVE_PATTERN, '').replace(/\s+/g, ' ').trim();
   const normalizedContent = contentForLocation.trim().toLowerCase();
+  const knownLocation = OPERATIONAL_LOCATION_ALIASES.find((item) => item.pattern.test(contentForLocation));
+
+  if (knownLocation) {
+    return knownLocation.location;
+  }
 
   const locationMatch = contentForLocation.match(
     /\b(?:in|for|near|around|at)\s+([a-zA-Z\s]+?)(?:,|\s+(?:and|with|show|weather|forecast|flight|flights|aviation|train|trains|highway|highways|road|roads|roadblock|roadblocks|impact|warning|alert|disaster|situation|status|data)\b|$)/i
@@ -481,10 +518,15 @@ function getWeatherChartArea(points: Array<{ x: number; y: number }>) {
 function getFallbackNotice(error: unknown, languageCode: string = 'en-IN') {
   const message = error instanceof Error ? error.message : '';
   const useHindi = languageCode === 'hi-IN';
+  const useTamil = languageCode === 'ta-IN';
 
   if (/rate limit|429/i.test(message)) {
     if (useHindi) {
       return 'Sarvam AI फिलहाल rate-limited है, इसलिए DRKA उपलब्ध डेटा से स्थानीय fallback जवाब दिखा रहा है।';
+    }
+
+    if (useTamil) {
+      return 'Sarvam AI தற்போது rate-limited உள்ளது. DRKA கிடைக்கும் தரவின் அடிப்படையில் பதிலை காட்டுகிறது.';
     }
 
     return 'Sarvam AI is temporarily rate-limited, so DRKA is showing a local fallback response from the available data.';
@@ -495,6 +537,10 @@ function getFallbackNotice(error: unknown, languageCode: string = 'en-IN') {
       return 'Sarvam AI जुड़ा हुआ है, लेकिन इस समय account में credits उपलब्ध नहीं हैं, इसलिए DRKA उपलब्ध डेटा से स्थानीय fallback जवाब दिखा रहा है।';
     }
 
+    if (useTamil) {
+      return 'Sarvam AI இணைக்கப்பட்டுள்ளது, ஆனால் இப்போது account credits இல்லை. DRKA கிடைக்கும் தரவின் அடிப்படையில் பதிலை காட்டுகிறது.';
+    }
+
     return 'Sarvam AI is connected, but the account has no available credits right now, so DRKA is showing a local fallback response from the available data.';
   }
 
@@ -503,11 +549,19 @@ function getFallbackNotice(error: unknown, languageCode: string = 'en-IN') {
       return 'AI/provider request में ज्यादा समय लगा, इसलिए DRKA उपलब्ध डेटा से स्थानीय fallback जवाब दिखा रहा है।';
     }
 
+    if (useTamil) {
+      return 'AI/provider கோரிக்கை அதிக நேரம் எடுத்தது. DRKA கிடைக்கும் தரவின் அடிப்படையில் பதிலை காட்டுகிறது.';
+    }
+
     return 'The AI/provider request took too long, so DRKA is showing a local fallback response from the available data.';
   }
 
   if (useHindi) {
     return 'AI जवाब उपलब्ध नहीं था, इसलिए DRKA उपलब्ध डेटा से स्थानीय fallback जवाब दिखा रहा है।';
+  }
+
+  if (useTamil) {
+    return 'AI பதில் கிடைக்கவில்லை. DRKA கிடைக்கும் தரவின் அடிப்படையில் பதிலை காட்டுகிறது.';
   }
 
   return 'AI response was unavailable, so DRKA is showing a local fallback response from the available data.';
@@ -1179,10 +1233,10 @@ function ChatApp() {
             },
           ];
 
-          const weatherResponse = await sendChat(weatherTranscript, languageCode);
+          const weatherResponse = await sendChat(weatherTranscript, languageCode, 'sarvam-30b');
           weatherReply = weatherResponse.text;
-        } catch (caughtError) {
-          weatherReply = `${getFallbackNotice(caughtError, languageCode)}\n\n${formatWeatherResponse(weatherSummary, languageCode)}`;
+        } catch {
+          weatherReply = formatWeatherResponse(weatherSummary, languageCode);
         }
 
         const streamedWeatherMessage = await streamAssistantMessage(
