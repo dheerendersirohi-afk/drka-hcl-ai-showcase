@@ -124,7 +124,7 @@ const STORAGE_KEY = 'drka-hcl-assistant-sessions';
 const KNOWLEDGE_STORAGE_KEY = 'drka-hcl-knowledge-base';
 const STORAGE_VERSION_KEY = 'drka-hcl-storage-version';
 const STORAGE_VERSION = '2026-04-26-clean-mobility-state';
-const DISASTER_RESPONSE_URL = 'https://dheerendersirohi-afk.github.io/drka-disaster-response/?v=20260427-40';
+const DISASTER_RESPONSE_URL = 'https://dheerendersirohi-afk.github.io/drka-disaster-response/?v=20260429-42';
 const INTERNAL_DISASTER_RESPONSE_PATH = '/disaster-response';
 const WEATHER_TIMEOUT_MS = 15000;
 
