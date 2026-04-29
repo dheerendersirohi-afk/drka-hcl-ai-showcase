@@ -6,8 +6,10 @@ const SARVAM_ASR_URL = 'https://api.sarvam.ai/speech-to-text';
 const SARVAM_TRANSLATE_URL = 'https://api.sarvam.ai/translate';
 const SARVAM_MODEL = 'sarvam-105b';
 const SARVAM_MAX_TOKENS = 2400;
-const SARVAM_REASONING_EFFORT = null;
+const SARVAM_REASONING_EFFORT = 'low';
 const REQUEST_TIMEOUT_MS = 45000;
+const FINAL_ANSWER_DIRECTIVE =
+  'Return only the final user-facing answer. Do not include hidden reasoning, chain-of-thought, or <think> tags.';
 
 const SARVAM_CHAT_MODELS = [
   {
@@ -352,7 +354,13 @@ function getLanguageDirective(languageCode: string) {
 
 function withLanguageDirective(messages: ChatMessage[], languageCode: string) {
   if (!languageCode || languageCode === 'auto') {
-    return messages;
+    return [
+      {
+        role: 'system' as const,
+        content: FINAL_ANSWER_DIRECTIVE,
+      },
+      ...messages,
+    ];
   }
 
   return [
@@ -360,7 +368,8 @@ function withLanguageDirective(messages: ChatMessage[], languageCode: string) {
       role: 'system' as const,
       content:
         `Strict response language rule: ${getLanguageDirective(languageCode)} ` +
-        'Use the native script for that language. Translate labels and explanations into that language even when source data is English.',
+        'Use the native script for that language. Translate labels and explanations into that language even when source data is English. ' +
+        FINAL_ANSWER_DIRECTIVE,
     },
     ...messages,
   ];
