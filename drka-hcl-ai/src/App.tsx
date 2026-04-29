@@ -368,6 +368,28 @@ function getPreferredAudioMimeType() {
   ].find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) || '';
 }
 
+function canUseSaarasProvider() {
+  return shouldUseSecureApi() || Boolean(import.meta.env.VITE_SARVAM_API_KEY?.trim());
+}
+
+function getVoiceInputErrorMessage(caughtError: unknown) {
+  if (caughtError instanceof DOMException) {
+    if (caughtError.name === 'NotAllowedError' || caughtError.name === 'SecurityError') {
+      return 'Microphone permission is blocked. Allow microphone access for this site, then try Saaras V3 voice input again.';
+    }
+
+    if (caughtError.name === 'NotFoundError' || caughtError.name === 'DevicesNotFoundError') {
+      return 'No microphone was detected. Connect or enable a microphone, then try Saaras V3 again.';
+    }
+
+    if (caughtError.name === 'NotReadableError') {
+      return 'The microphone is already in use by another app. Close the other recorder/call and try again.';
+    }
+  }
+
+  return caughtError instanceof Error ? caughtError.message : 'Unable to start Saaras V3 voice input.';
+}
+
 function isSupportedKnowledgeFile(file: File) {
   return /\.(txt|md|markdown|json|csv)$/i.test(file.name) || file.type.startsWith('text/');
 }
@@ -764,7 +786,11 @@ function ChatApp() {
   }, [loading]);
 
   useEffect(() => {
-    const canRecordForSaaras = Boolean(navigator.mediaDevices && typeof MediaRecorder !== 'undefined');
+    const canRecordForSaaras = Boolean(
+      typeof navigator.mediaDevices?.getUserMedia === 'function' &&
+        typeof MediaRecorder !== 'undefined' &&
+        canUseSaarasProvider()
+    );
     setSaarasInputSupported(canRecordForSaaras);
     setSpeechInputSupported((current) => current || canRecordForSaaras);
   }, []);
@@ -864,7 +890,13 @@ function ChatApp() {
         void handleSendRef.current(transcript);
       }
     };
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      const speechError = (event as Event & { error?: string }).error;
+      if (speechError) {
+        setError(`Browser voice input stopped: ${speechError}. You can use Saaras V3 mic input or type your prompt.`);
+      }
+    };
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results)
         .map((result) => result[0]?.transcript || '')
@@ -1558,7 +1590,7 @@ function ChatApp() {
     if (saarasInputSupported) {
       void startSaarasRecording().catch((caughtError) => {
         setIsListening(false);
-        setError(caughtError instanceof Error ? caughtError.message : 'Unable to start Saaras V3 voice input.');
+        setError(getVoiceInputErrorMessage(caughtError));
       });
       return;
     }

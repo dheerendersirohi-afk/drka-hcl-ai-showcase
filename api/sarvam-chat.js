@@ -4,6 +4,7 @@ const SARVAM_CHAT_URL = 'https://api.sarvam.ai/v1/chat/completions';
 const SARVAM_REASONING_EFFORTS = new Set(['low', 'medium', 'high']);
 const SARVAM_CHAT_MODELS = new Set(['sarvam-30b', 'sarvam-105b', 'sarvam-m']);
 const DEFAULT_CHAT_MODEL = 'sarvam-105b';
+const VISIBLE_FALLBACK_MODEL = 'sarvam-30b';
 const DEFAULT_MAX_TOKENS = 2400;
 const DEFAULT_REASONING_EFFORT = null;
 
@@ -33,6 +34,17 @@ async function requestSarvamChat(apiKey, payload) {
   });
 }
 
+function withVisibleAnswerInstruction(messages) {
+  return [
+    {
+      role: 'system',
+      content:
+        'Return a concise final answer in message.content. Do not return reasoning-only output, and do not include <think> tags.',
+    },
+    ...messages,
+  ];
+}
+
 export default async function sarvamChat(req, res) {
   if (handleOptions(req, res)) {
     return;
@@ -55,11 +67,12 @@ export default async function sarvamChat(req, res) {
           ? body.reasoning_effort
           : DEFAULT_REASONING_EFFORT;
 
+    const requestedMaxTokens = typeof body.max_tokens === 'number' ? body.max_tokens : DEFAULT_MAX_TOKENS;
     const payload = {
       model,
       messages: Array.isArray(body.messages) ? body.messages : [],
       temperature: typeof body.temperature === 'number' ? body.temperature : 0.35,
-      max_tokens: typeof body.max_tokens === 'number' ? body.max_tokens : DEFAULT_MAX_TOKENS,
+      max_tokens: Math.max(requestedMaxTokens, model === DEFAULT_CHAT_MODEL ? DEFAULT_MAX_TOKENS : 160),
       reasoning_effort: reasoningEffort,
     };
 
@@ -70,10 +83,19 @@ export default async function sarvamChat(req, res) {
 
     let data = await requestSarvamChat(apiKey, payload);
 
-    if (!hasFinalContent(data) && payload.model !== DEFAULT_CHAT_MODEL) {
+    if (!hasFinalContent(data)) {
       data = await requestSarvamChat(apiKey, {
         ...payload,
-        model: DEFAULT_CHAT_MODEL,
+        messages: withVisibleAnswerInstruction(payload.messages),
+        max_tokens: Math.max(payload.max_tokens, DEFAULT_MAX_TOKENS),
+      });
+    }
+
+    if (!hasFinalContent(data) && payload.model !== VISIBLE_FALLBACK_MODEL) {
+      data = await requestSarvamChat(apiKey, {
+        ...payload,
+        model: VISIBLE_FALLBACK_MODEL,
+        messages: withVisibleAnswerInstruction(payload.messages),
         max_tokens: Math.max(payload.max_tokens, DEFAULT_MAX_TOKENS),
       });
     }
