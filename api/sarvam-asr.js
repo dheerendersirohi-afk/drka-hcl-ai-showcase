@@ -2,6 +2,13 @@ import { fetchJson, handleOptions, readJson, requireEnv, sendJson } from './_uti
 
 const SARVAM_ASR_URL = 'https://api.sarvam.ai/speech-to-text';
 
+function normalizeAudioMimeType(value) {
+  return String(value || 'audio/webm')
+    .split(';')[0]
+    .trim()
+    .toLowerCase() || 'audio/webm';
+}
+
 export default async function sarvamAsr(req, res) {
   if (handleOptions(req, res)) {
     return;
@@ -16,7 +23,7 @@ export default async function sarvamAsr(req, res) {
     const apiKey = requireEnv('SARVAM_API_KEY');
     const body = await readJson(req);
     const audioBase64 = String(body.audioBase64 || '').trim();
-    const mimeType = String(body.mimeType || 'audio/webm').trim();
+    const mimeType = normalizeAudioMimeType(body.mimeType);
     const fileName = String(body.fileName || 'drka-voice.webm').trim();
 
     if (!audioBase64) {

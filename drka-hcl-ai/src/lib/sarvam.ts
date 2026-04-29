@@ -673,6 +673,10 @@ function blobToBase64(blob: Blob) {
   });
 }
 
+function normalizeAudioMimeType(value: string) {
+  return value.split(';')[0]?.trim().toLowerCase() || 'audio/webm';
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -784,7 +788,7 @@ export async function transcribeSpeech(
   mode: 'transcribe' | 'translate' | 'verbatim' | 'translit' | 'codemix' = 'transcribe'
 ) {
   const normalizedLanguageCode = languageCode && languageCode !== 'auto' ? languageCode : 'unknown';
-  const mimeType = audio.type || 'audio/webm';
+  const mimeType = normalizeAudioMimeType(audio.type || 'audio/webm');
   const fileExtension = mimeType.includes('wav') ? 'wav' : mimeType.includes('ogg') ? 'ogg' : 'webm';
 
   if (shouldUseSecureApi()) {
@@ -830,7 +834,8 @@ export async function transcribeSpeech(
 
   const apiKey = getApiKey();
   const formData = new FormData();
-  formData.append('file', audio, `drka-voice.${fileExtension}`);
+  const normalizedAudio = audio.type === mimeType ? audio : new Blob([audio], { type: mimeType });
+  formData.append('file', normalizedAudio, `drka-voice.${fileExtension}`);
   formData.append('model', 'saaras:v3');
   formData.append('mode', mode);
   formData.append('language_code', normalizedLanguageCode);
