@@ -735,7 +735,19 @@ function localizeHindiWeatherPhrase(value: string) {
 function localizeTamilWeatherPhrase(value: string) {
   const normalized = value.toLowerCase();
 
+  if (/not available|unavailable|n\/a/.test(normalized)) return 'கிடைக்கவில்லை';
+  if (/intervals of clouds and sunshine.*wind|wind.*intervals of clouds and sunshine/.test(normalized)) {
+    return 'மேகம் மற்றும் வெயில் மாறிமாறி; காற்று அதிகம்';
+  }
+  if (/plenty of sun.*(breezy|windy)|(?:breezy|windy).*plenty of sun/.test(normalized)) {
+    return 'நல்ல வெயில்; காற்று அதிகம்';
+  }
+  if (/mostly sunny.*(breezy|windy)|(?:breezy|windy).*mostly sunny/.test(normalized)) {
+    return 'பெரும்பாலும் வெயில்; காற்று அதிகம்';
+  }
+  if (/plenty of sun/.test(normalized)) return 'நல்ல வெயில்';
   if (/mostly sunny/.test(normalized)) return 'பெரும்பாலும் வெயில்';
+  if (/intervals of clouds and sunshine/.test(normalized)) return 'மேகம் மற்றும் வெயில் மாறிமாறி';
   if (/partly sunny|partly cloudy/.test(normalized)) return 'பகுதி வெயில்/மேகம்';
   if (/sunny|clear/.test(normalized)) return 'வெயில் தெளிவு';
   if (/cloud|overcast/.test(normalized)) return 'மேகமூட்டம்';
@@ -747,6 +759,29 @@ function localizeTamilWeatherPhrase(value: string) {
   if (/wind/.test(normalized)) return 'காற்று அதிகம்';
 
   return value;
+}
+
+function localizeTamilDayLabel(label: string) {
+  const normalized = label.toLowerCase();
+  const labels: Record<string, string> = {
+    today: 'இன்று',
+    mon: 'திங்கள்',
+    monday: 'திங்கள்',
+    tue: 'செவ்வாய்',
+    tuesday: 'செவ்வாய்',
+    wed: 'புதன்',
+    wednesday: 'புதன்',
+    thu: 'வியாழன்',
+    thursday: 'வியாழன்',
+    fri: 'வெள்ளி',
+    friday: 'வெள்ளி',
+    sat: 'சனி',
+    saturday: 'சனி',
+    sun: 'ஞாயிறு',
+    sunday: 'ஞாயிறு',
+  };
+
+  return labels[normalized] || label;
 }
 
 export function formatWeatherResponse(summary: WeatherSummary, languageCode = 'en-IN') {
@@ -806,7 +841,7 @@ export function formatWeatherResponse(summary: WeatherSummary, languageCode = 'e
       `உணரப்படும் வெப்பநிலை: ${summary.realFeelC}°C / ${summary.realFeelF}°F`,
       `நிலைமை: ${localizeTamilWeatherPhrase(summary.condition)}`,
       `காற்று: ${summary.wind}`,
-      `காற்றுத் தரம்: ${summary.airQuality}`,
+      `காற்றுத் தரம்: ${localizeTamilWeatherPhrase(summary.airQuality)}`,
       `ஈரப்பதம்: ${summary.humidity}`,
       `UV குறியீடு: ${summary.uvIndex}`,
       `மேக மூட்டம்: ${summary.cloudCover}`,
@@ -817,7 +852,9 @@ export function formatWeatherResponse(summary: WeatherSummary, languageCode = 'e
       `நாளைய அதிகபட்சம்: ${summary.tomorrowHighC}°C / ${summary.tomorrowHighF}°F`,
       `முன்னோக்கு: ${localizeTamilWeatherPhrase(summary.tomorrowSummary)}`,
       `5 நாள் முன்னறிவிப்பு: ${summary.dailyForecasts
-        .map((day) => `${day.label} ${day.minC}-${day.maxC}°C ${localizeTamilWeatherPhrase(day.summary)}`)
+        .map(
+          (day) => `${localizeTamilDayLabel(day.label)} ${day.minC}-${day.maxC}°C ${localizeTamilWeatherPhrase(day.summary)}`
+        )
         .join(' | ')}`,
       `NOAA: ${summary.noaa.status === 'available' ? 'climate cross-check கிடைக்கிறது' : 'climate context கிடைக்கவில்லை'}`,
     ].join('\n');

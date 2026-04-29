@@ -1207,8 +1207,9 @@ function ChatApp() {
       if (weatherSummary) {
         const forecastDemo = buildForecastDemo(weatherSummary);
         let weatherReply = formatWeatherResponse(weatherSummary, languageCode);
+        const hasExactLocalWeatherLanguage = ['en-IN', 'hi-IN', 'ta-IN'].includes(languageCode);
 
-        try {
+        if (!hasExactLocalWeatherLanguage) {
           const weatherTranscript: ChatMessage[] = [
             {
               role: 'system',
@@ -1232,10 +1233,12 @@ function ChatApp() {
             },
           ];
 
-          const weatherResponse = await sendChat(weatherTranscript, languageCode, 'sarvam-30b');
-          weatherReply = weatherResponse.text;
-        } catch {
-          weatherReply = formatWeatherResponse(weatherSummary, languageCode);
+          try {
+            const weatherResponse = await sendChat(weatherTranscript, languageCode, 'sarvam-30b');
+            weatherReply = weatherResponse.text;
+          } catch {
+            weatherReply = formatWeatherResponse(weatherSummary, languageCode);
+          }
         }
 
         const streamedWeatherMessage = await streamAssistantMessage(
